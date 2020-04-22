@@ -22,6 +22,8 @@ void MyApp::update() {
 void MyApp::draw() {
   if (UI_state == UIState::kInputText) {
     drawTextInput();
+  } else {
+    cinder::gl::clear();
   }
 }
 
@@ -52,7 +54,7 @@ void MyApp::keyDown(KeyEvent event) {
         cinder::gl::clear();
         UI_state = UIState::kClose;
       } else if (text_input.text_options[text_input.current_row][text_input.current_col] == "DEL") {
-        if (player_name.size() > 0) {
+        if (!player_name.empty()) {
           player_name.pop_back();
         }
       } else {
