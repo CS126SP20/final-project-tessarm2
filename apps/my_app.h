@@ -32,6 +32,8 @@ class MyApp : public cinder::app::App {
   void draw() override;
   void keyDown(cinder::app::KeyEvent) override;
   void drawTextInput();
+  void PrintText(const std::string& text, const ci::ColorA& color, const ci::ColorA& bg_color, const cinder::ivec2& size,
+                 const cinder::vec2& loc);
   std::string player_name = "Lonk";
 
 

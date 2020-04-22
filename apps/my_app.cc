@@ -17,8 +17,6 @@ void MyApp::setup() { }
 
 void MyApp::update() {
 
-
-
 }
 
 void MyApp::draw() {
@@ -67,18 +65,47 @@ void MyApp::keyDown(KeyEvent event) {
 }
 
   void MyApp::drawTextInput() {
-    cinder::TextBox tbox = cinder::TextBox().alignment(cinder::TextBox::LEFT).
-        font(cinder::Font("Arial", 30)).text(player_name).size(cinder::ivec2(800, cinder::TextBox::GROW));
-    tbox.setColor(ci::ColorA(0,0,0,1));
-    tbox.setBackgroundColor(ci::ColorA(1.0f, 1.0f, 1.0f, 1.0f));
-    tbox.setPremultiplied(true);
-    tbox.setLigate(true);
-    auto mTextTexture = ci::gl::Texture2d::create(tbox.render());
-    cinder::gl::ScopedBlendPremult blend;
-    cinder::gl::draw( mTextTexture );
+  //bug where last letter deleted remains
+    PrintText(player_name, ci::ColorA(1,1,1,1), ci::ColorA(0,0,0,1),
+        cinder::ivec2(800, cinder::TextBox::GROW), cinder::vec2(400, 50));
+    //use a for loop to draw all the chars
+    cinder::vec2 center = cinder::vec2(240,150);
+    for (int row = 0; row < 4; row++) {
+      for (int col = 0; col < 7; col++) {
+        if (text_input.current_row == row && text_input.current_col == col) {
+          PrintText(text_input.text_options[row][col],
+                    ci::ColorA(1,1,0,1),
+                    ci::ColorA(0,0,0,0),
+                    cinder::ivec2(140,140), cinder::vec2(center.x + col *60.0,center.y + row *60.0));
+        } else {
+          PrintText(text_input.text_options[row][col],
+                    ci::ColorA(1,1,1,1),
+                    ci::ColorA(0,0,0,0),
+                    cinder::ivec2(140,140), cinder::vec2(center.x + col *60.0,center.y + row *60.0));
+        }
+
+      }
+    }
 
   }
 
+  //TAKEN FROM SNAKE GAME
+  void MyApp::PrintText(const std::string& text, const ci::ColorA& color, const ci::ColorA& bg_color, const cinder::ivec2& size,
+                 const cinder::vec2& loc) {
+
+    auto box = cinder::TextBox()
+        .alignment(cinder::TextBox::CENTER)
+        .font(cinder::Font("Comic Sans MS", 40))
+        .size(size)
+        .color(color)
+        .backgroundColor(bg_color)
+        .text(text);
+
+    const auto box_size = box.getSize();
+    const cinder::vec2 locp = {loc.x - box_size.x / 2.0, loc.y - box_size.y / 2.0};
+    const auto texture = cinder::gl::Texture::create(box.render());
+    cinder::gl::draw(texture, locp);
+  }
 
 
 }  // namespace myapp
