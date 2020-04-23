@@ -4,26 +4,56 @@
 
 #include <cinder/app/App.h>
 #include <cinder/gl/gl.h>
+#include <poSpritesheet.h>
+#include <poSpritesheetAnimation.h>
+#include <cinder/Json.h>
 
 
 namespace myapp {
 
 using cinder::app::KeyEvent;
 
+  cinder::gl::Texture2dRef		mTex;
+  cinder::gl::Texture2dRef		chicken_tex;
+  cinder::JsonTree json;
+  po::SpritesheetRef mSpritesheet;
+  po::SpritesheetAnimationRef mSpritesheetAnimation;
 
-MyApp::MyApp() { }
 
-void MyApp::setup() { }
+  MyApp::MyApp() { }
+
+void MyApp::setup() {
+  auto img = loadImage( loadAsset( "test_bg.jpg" ) );
+  mTex = cinder::gl::Texture2d::create( img );
+  chicken_tex = cinder::gl::Texture::create(loadImage(loadAsset("chicken_forward.png")));
+  json = cinder::JsonTree(loadAsset("chicken_forward.json"));
+   mSpritesheet = po::Spritesheet::create(chicken_tex, json);
+   mSpritesheetAnimation = po::SpritesheetAnimation::create(mSpritesheet);
+  mSpritesheetAnimation->setIsLoopingEnabled(true);
+  mSpritesheetAnimation->setFrameRate(4.0);
+  mSpritesheetAnimation->play();
+}
 
 void MyApp::update() {
-
+  mSpritesheetAnimation->update();
 }
 
 void MyApp::draw() {
   if (UI_state == UIState::kInputText) {
-    drawTextInput();
-  } else {
+    //cinder::gl::draw( chicken_tex );
     cinder::gl::clear();
+    mSpritesheetAnimation->draw();
+
+    drawTextInput();
+  }
+  if (game_state == GameState::kOpener){
+    cinder::gl::clear();
+    //make a new player object?
+    PrintText("hello, " + player_name + "\n welcome to _____",
+        ci::ColorA(1,1,1,1),
+        ci::ColorA(0,0,0,1),
+        cinder::ivec2(cinder::TextBox::GROW, cinder::TextBox::GROW),
+        cinder::vec2(getWindowCenter()));
   }
 }
 
@@ -53,6 +83,7 @@ void MyApp::keyDown(KeyEvent event) {
       if (text_input.text_options[text_input.current_row][text_input.current_col] == "OK") {
         cinder::gl::clear();
         UI_state = UIState::kClose;
+        game_state = GameState::kOpener;
       } else if (text_input.text_options[text_input.current_row][text_input.current_col] == "DEL") {
         if (!player_name.empty()) {
           player_name.pop_back();

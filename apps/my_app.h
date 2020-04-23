@@ -13,7 +13,7 @@ namespace myapp {
 
   enum class GameState {
     kOverworld,
-    kCutscene,
+    kOpener,
     kFight,
     kUI
   };
