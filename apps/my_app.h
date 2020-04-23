@@ -7,6 +7,9 @@
 #include <mylibrary/text_input.h>
 #include <cinder/Text.h>
 #include <cinder/Font.h>
+#include <poSpritesheet.h>
+#include <poSpritesheetAnimation.h>
+#include <cinder/Json.h>
 
 
 namespace myapp {
@@ -34,7 +37,11 @@ class MyApp : public cinder::app::App {
   void drawTextInput();
   void PrintText(const std::string& text, const ci::ColorA& color, const ci::ColorA& bg_color, const cinder::ivec2& size,
                  const cinder::vec2& loc);
+
   std::string player_name = "Lonk";
+  ci::vec2 player_loc = ci::vec2(400, 320);
+  po::SpritesheetAnimationRef current_sprite;
+
 
 
 private:
@@ -42,6 +49,9 @@ private:
   UIState UI_state = UIState::kInputText;
   myLibrary::Text_input text_input;
 
+  void drawPlayer();
+
+  po::SpritesheetAnimationRef SetUpSprite(const std::string& tex_file, const std::string& json_file);
 };
 
 }  // namespace myapp

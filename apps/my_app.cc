@@ -14,36 +14,34 @@ namespace myapp {
 using cinder::app::KeyEvent;
 
   cinder::gl::Texture2dRef		mTex;
-  cinder::gl::Texture2dRef		chicken_tex;
-  cinder::JsonTree json;
-  po::SpritesheetRef mSpritesheet;
-  po::SpritesheetAnimationRef mSpritesheetAnimation;
-
+  po::SpritesheetAnimationRef chick_right_sprite;
+  po::SpritesheetAnimationRef chick_left_sprite;
+  po::SpritesheetAnimationRef chick_forward_sprite;
+  po::SpritesheetAnimationRef chick_backward_sprite;
 
   MyApp::MyApp() { }
 
 void MyApp::setup() {
   auto img = loadImage( loadAsset( "test_bg.jpg" ) );
   mTex = cinder::gl::Texture2d::create( img );
-  chicken_tex = cinder::gl::Texture::create(loadImage(loadAsset("chicken_forward.png")));
-  json = cinder::JsonTree(loadAsset("chicken_forward.json"));
-   mSpritesheet = po::Spritesheet::create(chicken_tex, json);
-   mSpritesheetAnimation = po::SpritesheetAnimation::create(mSpritesheet);
-  mSpritesheetAnimation->setIsLoopingEnabled(true);
-  mSpritesheetAnimation->setFrameRate(4.0);
-  mSpritesheetAnimation->play();
+
+  chick_right_sprite = SetUpSprite("chicken_right.png", "chicken_right.json");
+  chick_left_sprite = SetUpSprite("chicken_left.png", "chicken_left.json");
+  chick_forward_sprite = SetUpSprite("chicken_forward.png", "chicken_forward.json");
+  chick_backward_sprite = SetUpSprite("chicken_backward.png", "chicken_backward.json");
+  current_sprite = chick_forward_sprite;
+
 }
 
 void MyApp::update() {
-  mSpritesheetAnimation->update();
+    if (current_sprite) {
+      current_sprite->update();
+    }
 }
 
 void MyApp::draw() {
   if (UI_state == UIState::kInputText) {
-    //cinder::gl::draw( chicken_tex );
     cinder::gl::clear();
-    mSpritesheetAnimation->draw();
-
     drawTextInput();
   }
   if (game_state == GameState::kOpener){
@@ -55,9 +53,16 @@ void MyApp::draw() {
         cinder::ivec2(cinder::TextBox::GROW, cinder::TextBox::GROW),
         cinder::vec2(getWindowCenter()));
   }
+  if (game_state == GameState::kOverworld) {
+    //TODO make function DrawPlayer that sets the model matrices to the player's location and draws the animation
+    cinder::gl::clear();
+    ci::gl::draw(mTex);
+    drawPlayer();
+  }
 }
 
 void MyApp::keyDown(KeyEvent event) {
+
   if (UI_state == UIState::kInputText) {
     if (event.getCode() == KeyEvent::KEY_RIGHT) {
       if (text_input.current_col < 6) {
@@ -84,6 +89,7 @@ void MyApp::keyDown(KeyEvent event) {
         cinder::gl::clear();
         UI_state = UIState::kClose;
         game_state = GameState::kOpener;
+        return;
       } else if (text_input.text_options[text_input.current_row][text_input.current_col] == "DEL") {
         if (!player_name.empty()) {
           player_name.pop_back();
@@ -95,10 +101,51 @@ void MyApp::keyDown(KeyEvent event) {
       }
     }
   } //end input text state
+
+  if (game_state == GameState::kOpener) {
+    if (event.getCode() == KeyEvent::KEY_z) {
+      game_state = GameState::kOverworld;
+      return;
+    }
+  } //end opener state
+
+  if (game_state == GameState::kOverworld) {
+    if (event.getCode() == KeyEvent::KEY_RIGHT) {
+      player_loc.x += 4;
+      if (current_sprite != chick_right_sprite) {
+        current_sprite = chick_right_sprite;
+        current_sprite->play();
+      }
+    } else if (event.getCode() == KeyEvent::KEY_LEFT) {
+      player_loc.x += -4;
+      if (current_sprite != chick_left_sprite) {
+        current_sprite = chick_left_sprite;
+        current_sprite->play();
+      }
+    } else if (event.getCode() == KeyEvent::KEY_UP) {
+      player_loc.y += -4;
+      if (current_sprite != chick_backward_sprite) {
+        current_sprite = chick_backward_sprite;
+        current_sprite->play();
+      }
+    } else if (event.getCode() == KeyEvent::KEY_DOWN) {
+      player_loc.y += 4;
+      if (current_sprite != chick_forward_sprite) {
+        current_sprite = chick_forward_sprite;
+        current_sprite->play();
+      }
+    }
+  } //end overworld state
 }
 
+void MyApp::drawPlayer() {
+    ci::gl::pushModelMatrix();
+    ci::gl::translate( player_loc );
+    current_sprite->draw();
+    ci::gl::popModelMatrix();
+  }
+
   void MyApp::drawTextInput() {
-  //bug where last letter deleted remains
     PrintText(player_name, ci::ColorA(1,1,1,1), ci::ColorA(0,0,0,1),
         cinder::ivec2(800, cinder::TextBox::GROW), cinder::vec2(400, 50));
     //use a for loop to draw all the chars
@@ -140,5 +187,15 @@ void MyApp::keyDown(KeyEvent event) {
     cinder::gl::draw(texture, locp);
   }
 
+  po::SpritesheetAnimationRef MyApp::SetUpSprite(const std::string& tex_file, const std::string& json_file) {
+    auto chicken_tex = cinder::gl::Texture::create(loadImage(loadAsset(tex_file)));
+    auto json = cinder::JsonTree(loadAsset(json_file));
+    auto mSpritesheet = po::Spritesheet::create(chicken_tex, json);
+    po::SpritesheetAnimationRef sprite = po::SpritesheetAnimation::create(mSpritesheet);
+    sprite->setIsLoopingEnabled(true);
+    sprite->setFrameRate(8.0);
+    return sprite;
+
+  }
 
 }  // namespace myapp
