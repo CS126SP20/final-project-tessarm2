@@ -40,6 +40,7 @@ class MyApp : public cinder::app::App {
 
   std::string player_name = "Lonk";
   ci::vec2 player_loc = ci::vec2(400, 320);
+  ci::vec2 bg_loc = ci::vec2(0,0);
   po::SpritesheetAnimationRef current_sprite;
 
 
@@ -52,6 +53,8 @@ private:
   void drawPlayer();
 
   po::SpritesheetAnimationRef SetUpSprite(const std::string& tex_file, const std::string& json_file);
+
+  void drawBg();
 };
 
 }  // namespace myapp

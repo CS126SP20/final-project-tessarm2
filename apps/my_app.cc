@@ -22,7 +22,7 @@ using cinder::app::KeyEvent;
   MyApp::MyApp() { }
 
 void MyApp::setup() {
-  auto img = loadImage( loadAsset( "test_bg.jpg" ) );
+  auto img = loadImage( loadAsset( "basic_bg.png" ) );
   mTex = cinder::gl::Texture2d::create( img );
 
   chick_right_sprite = SetUpSprite("chicken_right.png", "chicken_right.json");
@@ -54,9 +54,8 @@ void MyApp::draw() {
         cinder::vec2(getWindowCenter()));
   }
   if (game_state == GameState::kOverworld) {
-    //TODO make function DrawPlayer that sets the model matrices to the player's location and draws the animation
     cinder::gl::clear();
-    ci::gl::draw(mTex);
+    drawBg();
     drawPlayer();
   }
 }
@@ -111,29 +110,64 @@ void MyApp::keyDown(KeyEvent event) {
 
   if (game_state == GameState::kOverworld) {
     if (event.getCode() == KeyEvent::KEY_RIGHT) {
-      player_loc.x += 4;
-      if (current_sprite != chick_right_sprite) {
-        current_sprite = chick_right_sprite;
-        current_sprite->play();
+      if (player_loc.x < 700) {
+        player_loc.x += 4;
+        if (current_sprite != chick_right_sprite) {
+          current_sprite = chick_right_sprite;
+          current_sprite->play();
+        }
+      } else {
+        bg_loc.x += -4;
+        if (current_sprite != chick_right_sprite) {
+          current_sprite = chick_right_sprite;
+          current_sprite->play();
+        }
       }
     } else if (event.getCode() == KeyEvent::KEY_LEFT) {
-      player_loc.x += -4;
-      if (current_sprite != chick_left_sprite) {
-        current_sprite = chick_left_sprite;
-        current_sprite->play();
+      if (player_loc.x > 100) {
+        player_loc.x += -4;
+        if (current_sprite != chick_left_sprite) {
+          current_sprite = chick_left_sprite;
+          current_sprite->play();
+        }
+      } else {
+        bg_loc.x += 4;
+        if (current_sprite != chick_left_sprite) {
+          current_sprite = chick_left_sprite;
+          current_sprite->play();
+        }
       }
+
     } else if (event.getCode() == KeyEvent::KEY_UP) {
-      player_loc.y += -4;
-      if (current_sprite != chick_backward_sprite) {
-        current_sprite = chick_backward_sprite;
-        current_sprite->play();
+      if (player_loc.y > 100) {
+        player_loc.y += -4;
+        if (current_sprite != chick_backward_sprite) {
+          current_sprite = chick_backward_sprite;
+          current_sprite->play();
+        }
+      } else {
+        bg_loc.y += 4;
+        if (current_sprite != chick_backward_sprite) {
+          current_sprite = chick_backward_sprite;
+          current_sprite->play();
+        }
       }
+
     } else if (event.getCode() == KeyEvent::KEY_DOWN) {
-      player_loc.y += 4;
-      if (current_sprite != chick_forward_sprite) {
-        current_sprite = chick_forward_sprite;
-        current_sprite->play();
+      if (player_loc.y < 540) {
+        player_loc.y += 4;
+        if (current_sprite != chick_forward_sprite) {
+          current_sprite = chick_forward_sprite;
+          current_sprite->play();
+        }
+      } else {
+        bg_loc.y += -4;
+        if (current_sprite != chick_forward_sprite) {
+          current_sprite = chick_forward_sprite;
+          current_sprite->play();
+        }
       }
+
     }
   } //end overworld state
 }
@@ -142,6 +176,12 @@ void MyApp::drawPlayer() {
     ci::gl::pushModelMatrix();
     ci::gl::translate( player_loc );
     current_sprite->draw();
+    ci::gl::popModelMatrix();
+  }
+  void MyApp::drawBg() {
+    ci::gl::pushModelMatrix();
+    ci::gl::translate( bg_loc );
+    ci::gl::draw(mTex);
     ci::gl::popModelMatrix();
   }
 
