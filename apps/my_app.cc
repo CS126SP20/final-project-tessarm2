@@ -244,7 +244,6 @@ void MyApp::drawPlayer() {
                     ci::ColorA(0,0,0,0),
                     cinder::ivec2(140,140), cinder::vec2(center.x + col *60.0,center.y + row *60.0));
         }
-
       }
     }
 

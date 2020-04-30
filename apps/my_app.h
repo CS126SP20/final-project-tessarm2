@@ -11,6 +11,7 @@
 #include <poSpritesheet.h>
 #include <poSpritesheetAnimation.h>
 #include <cinder/Json.h>
+#include <mylibrary/NPC.h>
 
 
 namespace myapp {
@@ -50,10 +51,12 @@ class MyApp : public cinder::app::App {
                  const cinder::vec2& loc);
 
   std::string player_name = "Lonk";
+  int player_health = 100;
   ci::vec2 player_loc = ci::vec2(400, 320);
   ci::vec2 bg_loc = ci::vec2(0,0);
   po::SpritesheetAnimationRef current_sprite;
   std::vector<myLibrary::game_object> game_objects;
+  std::vector<myLibrary::NPC> NPC_list;
   int object_facing_index = -1;
 
 
