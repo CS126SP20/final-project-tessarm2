@@ -68,6 +68,9 @@ void MyApp::draw() {
     drawBg();
     drawPlayer();
     drawObjects();
+    if (UI_state == UIState::kTextbox) {
+      drawTextbox(game_objects.at(object_facing_index).getDesc());
+    }
   }
 }
 
@@ -121,7 +124,13 @@ void MyApp::keyDown(KeyEvent event) {
 
   if (game_state == GameState::kOverworld) {
     if (event.getCode() == KeyEvent::KEY_z) {
-      //do something if the player is facing an object or NPC
+      if (UI_state == UIState::kTextbox) {
+        UI_state = UIState::kClose;
+      }
+      if (canInteract()) {
+        //update the UI with a lil text box!!
+        UI_state = UIState::kTextbox;
+      }
     }
     if (event.getCode() == KeyEvent::KEY_RIGHT) {
       current_direction = Direction::kRight;
@@ -181,7 +190,7 @@ void MyApp::keyDown(KeyEvent event) {
           player_loc.y += kSpeed;
         } else {
           bg_loc.y += -kSpeed;
-          updateObjects(0, kSpeed);
+          updateObjects(0, -kSpeed);
         }
       }
     }
@@ -207,9 +216,12 @@ void MyApp::drawPlayer() {
       game_object.draw();
     }
   }
+
   void MyApp::updateObjects(int x_change, int y_change) {
     for (auto & game_object : game_objects) {
-      game_object.setLoc(ci::vec2(game_object.getLoc().x + x_change, game_object.getLoc().y + y_change));
+      //change the location of each object to scroll with background
+      game_object.setLoc(ci::vec2(game_object.getLoc().x +
+      x_change, game_object.getLoc().y + y_change));
     }
   }
 
@@ -221,6 +233,7 @@ void MyApp::drawPlayer() {
     for (int row = 0; row < 4; row++) {
       for (int col = 0; col < 7; col++) {
         if (text_input.current_row == row && text_input.current_col == col) {
+          //the current index matches the index the player is on, so the text is yellow
           PrintText(text_input.text_options[row][col],
                     ci::ColorA(1,1,0,1),
                     ci::ColorA(0,0,0,0),
@@ -255,6 +268,18 @@ void MyApp::drawPlayer() {
     cinder::gl::draw(texture, locp);
   }
 
+  void MyApp::drawTextbox(const std::string& text) {
+    auto box = cinder::TextBox()
+        .alignment(cinder::TextBox::LEFT)
+        .font(cinder::Font("Comic Sans MS", 25))
+        .size(ci::ivec2(800, 40))
+        .color(ci::ColorA(1,1,1,1))
+        .backgroundColor(ci::ColorA(0,0,0,1))
+        .text(text);
+    const auto texture = cinder::gl::Texture::create(box.render());
+    cinder::gl::draw(texture, ci::ivec2(0,540));
+  }
+
   po::SpritesheetAnimationRef MyApp::SetUpSprite(const std::string& tex_file, const std::string& json_file) {
     auto chicken_tex = cinder::gl::Texture::create(loadImage(loadAsset(tex_file)));
     auto json = cinder::JsonTree(loadAsset(json_file));
@@ -263,14 +288,41 @@ void MyApp::drawPlayer() {
     sprite->setIsLoopingEnabled(true);
     sprite->setFrameRate(2.0 * kSpeed);
     return sprite;
+  }
 
+  bool MyApp::canInteract() {
+    //add 16 because the location is the top right corner of the sprite.
+    ci::vec2 updated_loc;
+    if (current_direction == Direction::kRight) {
+      updated_loc =  ci::vec2(player_loc.x + 4 + 32, player_loc.y + 16);
+    } else if (current_direction == Direction::kLeft){
+      updated_loc =  ci::vec2(player_loc.x - 4, player_loc.y + 16);
+    } else if (current_direction == Direction::kUp) {
+      updated_loc =  ci::vec2(player_loc.x + 16, player_loc.y - 4);
+    } else {
+      updated_loc =  ci::vec2(player_loc.x + 16, player_loc.y + 32 + 4);
+    }
+    for(int i = 0; i < game_objects.size(); i++) {
+      auto size = game_objects.at(i).getTex()->getSize();
+      auto obj_loc = game_objects.at(i).getLoc();
+      //add the size to the location because location is top right corner of image.
+      auto area = ci::Area(obj_loc, ci::ivec2(obj_loc.x + size.x, obj_loc.y + size.y));
+      if (area.contains(updated_loc)) {
+        object_facing_index = i;
+        return true;
+      }
+    }
+    object_facing_index = -1;
+    return false;
   }
 
   bool MyApp::willColide(int x_change, int y_change) {
+    //add 16 because the location is the top right corner of the sprite.
     ci::vec2 updated_loc = ci::vec2(player_loc.x + x_change + 16, player_loc.y + y_change + 16);
     for(int i = 0; i < game_objects.size(); i++) {
       auto size = game_objects.at(i).getTex()->getSize();
       auto obj_loc = game_objects.at(i).getLoc();
+      //add the size to the location because location is top right corner of image.
       auto area = ci::Area(obj_loc, ci::ivec2(obj_loc.x + size.x, obj_loc.y + size.y));
       if (area.contains(updated_loc)) {
         return true;

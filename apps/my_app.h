@@ -24,6 +24,7 @@ namespace myapp {
 
   enum class UIState {
     kInputText,
+    kTextbox,
     kSelectingOption,
     kClose,
   };
@@ -53,7 +54,7 @@ class MyApp : public cinder::app::App {
   ci::vec2 bg_loc = ci::vec2(0,0);
   po::SpritesheetAnimationRef current_sprite;
   std::vector<myLibrary::game_object> game_objects;
-
+  int object_facing_index = -1;
 
 
 private:
@@ -66,10 +67,12 @@ private:
 
   po::SpritesheetAnimationRef SetUpSprite(const std::string& tex_file, const std::string& json_file);
   bool willColide(int x_change, int y_change);
+  bool canInteract();
 
   void drawBg();
   void drawObjects();
   void updateObjects(int x_change, int y_change);
+  void MyApp::drawTextbox(const std::string& text);
 };
 
 }  // namespace myapp
