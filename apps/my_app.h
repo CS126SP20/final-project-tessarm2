@@ -5,6 +5,7 @@
 
 #include <cinder/app/App.h>
 #include <mylibrary/text_input.h>
+#include <mylibrary/game_object.h>
 #include <cinder/Text.h>
 #include <cinder/Font.h>
 #include <poSpritesheet.h>
@@ -27,6 +28,15 @@ namespace myapp {
     kClose,
   };
 
+  enum class Direction {
+    kRight,
+    kLeft,
+    kUp,
+    kDown,
+  };
+
+  const int kSpeed = 4;
+
 class MyApp : public cinder::app::App {
  public:
   MyApp();
@@ -42,6 +52,7 @@ class MyApp : public cinder::app::App {
   ci::vec2 player_loc = ci::vec2(400, 320);
   ci::vec2 bg_loc = ci::vec2(0,0);
   po::SpritesheetAnimationRef current_sprite;
+  std::vector<myLibrary::game_object> game_objects;
 
 
 
@@ -49,12 +60,16 @@ private:
   GameState game_state;
   UIState UI_state = UIState::kInputText;
   myLibrary::Text_input text_input;
+  Direction current_direction;
 
   void drawPlayer();
 
   po::SpritesheetAnimationRef SetUpSprite(const std::string& tex_file, const std::string& json_file);
+  bool willColide(int x_change, int y_change);
 
   void drawBg();
+  void drawObjects();
+  void updateObjects(int x_change, int y_change);
 };
 
 }  // namespace myapp

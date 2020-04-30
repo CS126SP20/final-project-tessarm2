@@ -30,7 +30,17 @@ void MyApp::setup() {
   chick_forward_sprite = SetUpSprite("chicken_forward.png", "chicken_forward.json");
   chick_backward_sprite = SetUpSprite("chicken_backward.png", "chicken_backward.json");
   current_sprite = chick_forward_sprite;
+  current_sprite->play();
 
+  //set up objects
+  auto yellow_img = loadImage( loadAsset( "yellow_block.png" ) );
+  auto yellow_tex = cinder::gl::Texture2d::create( yellow_img );
+  game_objects.push_back(myLibrary::game_object(yellow_tex, ci::vec2(200,200), "It's a yellow block!"));
+  auto blue_img = loadImage( loadAsset( "blue_block.png" ) );
+  auto blue_tex = cinder::gl::Texture2d::create( blue_img );
+  game_objects.push_back(myLibrary::game_object(blue_tex, ci::vec2(400,400), "It's a blue block!"));
+
+  //set up npcs
 }
 
 void MyApp::update() {
@@ -57,6 +67,7 @@ void MyApp::draw() {
     cinder::gl::clear();
     drawBg();
     drawPlayer();
+    drawObjects();
   }
 }
 
@@ -109,67 +120,73 @@ void MyApp::keyDown(KeyEvent event) {
   } //end opener state
 
   if (game_state == GameState::kOverworld) {
+    if (event.getCode() == KeyEvent::KEY_z) {
+      //do something if the player is facing an object or NPC
+    }
     if (event.getCode() == KeyEvent::KEY_RIGHT) {
-      if (player_loc.x < 700) {
-        player_loc.x += 4;
-        if (current_sprite != chick_right_sprite) {
-          current_sprite = chick_right_sprite;
-          current_sprite->play();
-        }
-      } else {
-        bg_loc.x += -4;
-        if (current_sprite != chick_right_sprite) {
-          current_sprite = chick_right_sprite;
-          current_sprite->play();
-        }
+      current_direction = Direction::kRight;
+      if (current_sprite != chick_right_sprite) {
+        current_sprite = chick_right_sprite;
+        current_sprite->play();
       }
-    } else if (event.getCode() == KeyEvent::KEY_LEFT) {
-      if (player_loc.x > 100) {
-        player_loc.x += -4;
-        if (current_sprite != chick_left_sprite) {
-          current_sprite = chick_left_sprite;
-          current_sprite->play();
-        }
-      } else {
-        bg_loc.x += 4;
-        if (current_sprite != chick_left_sprite) {
-          current_sprite = chick_left_sprite;
-          current_sprite->play();
+      if (!(willColide(kSpeed, 0))) {
+        if (player_loc.x < 700) {
+          player_loc.x += kSpeed;
+        } else {
+          bg_loc.x += -kSpeed;
+          updateObjects(-kSpeed,0);
         }
       }
 
-    } else if (event.getCode() == KeyEvent::KEY_UP) {
-      if (player_loc.y > 100) {
-        player_loc.y += -4;
-        if (current_sprite != chick_backward_sprite) {
-          current_sprite = chick_backward_sprite;
-          current_sprite->play();
+    } else if (event.getCode() == KeyEvent::KEY_LEFT) {
+      current_direction = Direction::kLeft;
+      if (current_sprite != chick_left_sprite) {
+        current_sprite = chick_left_sprite;
+        current_sprite->play();
+      }
+      if (!(willColide(-kSpeed, 0))) {
+        if (player_loc.x > 100) {
+          player_loc.x += -kSpeed;
+        } else {
+          bg_loc.x += kSpeed;
+          updateObjects(kSpeed,0);
         }
-      } else {
-        bg_loc.y += 4;
-        if (current_sprite != chick_backward_sprite) {
-          current_sprite = chick_backward_sprite;
-          current_sprite->play();
+      }
+
+
+    } else if (event.getCode() == KeyEvent::KEY_UP) {
+      current_direction = Direction::kUp;
+      if (current_sprite != chick_backward_sprite) {
+        current_sprite = chick_backward_sprite;
+        current_sprite->play();
+      }
+      if ((!willColide(0, -kSpeed))) {
+        if (player_loc.y > 100) {
+          player_loc.y += -kSpeed;
+        } else {
+          bg_loc.y += kSpeed;
+          updateObjects(0, kSpeed);
         }
       }
 
     } else if (event.getCode() == KeyEvent::KEY_DOWN) {
-      if (player_loc.y < 540) {
-        player_loc.y += 4;
-        if (current_sprite != chick_forward_sprite) {
-          current_sprite = chick_forward_sprite;
-          current_sprite->play();
-        }
-      } else {
-        bg_loc.y += -4;
-        if (current_sprite != chick_forward_sprite) {
-          current_sprite = chick_forward_sprite;
-          current_sprite->play();
+
+      current_direction = Direction::kDown;
+      if (current_sprite != chick_forward_sprite) {
+        current_sprite = chick_forward_sprite;
+        current_sprite->play();
+      }
+      if (!(willColide(0, kSpeed))) {
+        if (player_loc.y < 540) {
+          player_loc.y += kSpeed;
+        } else {
+          bg_loc.y += -kSpeed;
+          updateObjects(0, kSpeed);
         }
       }
-
     }
   } //end overworld state
+
 }
 
 void MyApp::drawPlayer() {
@@ -183,6 +200,17 @@ void MyApp::drawPlayer() {
     ci::gl::translate( bg_loc );
     ci::gl::draw(mTex);
     ci::gl::popModelMatrix();
+  }
+
+  void MyApp::drawObjects() {
+    for (auto & game_object : game_objects) {
+      game_object.draw();
+    }
+  }
+  void MyApp::updateObjects(int x_change, int y_change) {
+    for (auto & game_object : game_objects) {
+      game_object.setLoc(ci::vec2(game_object.getLoc().x + x_change, game_object.getLoc().y + y_change));
+    }
   }
 
   void MyApp::drawTextInput() {
@@ -233,9 +261,22 @@ void MyApp::drawPlayer() {
     auto mSpritesheet = po::Spritesheet::create(chicken_tex, json);
     po::SpritesheetAnimationRef sprite = po::SpritesheetAnimation::create(mSpritesheet);
     sprite->setIsLoopingEnabled(true);
-    sprite->setFrameRate(8.0);
+    sprite->setFrameRate(2.0 * kSpeed);
     return sprite;
 
+  }
+
+  bool MyApp::willColide(int x_change, int y_change) {
+    ci::vec2 updated_loc = ci::vec2(player_loc.x + x_change + 16, player_loc.y + y_change + 16);
+    for(int i = 0; i < game_objects.size(); i++) {
+      auto size = game_objects.at(i).getTex()->getSize();
+      auto obj_loc = game_objects.at(i).getLoc();
+      auto area = ci::Area(obj_loc, ci::ivec2(obj_loc.x + size.x, obj_loc.y + size.y));
+      if (area.contains(updated_loc)) {
+        return true;
+      }
+    }
+    return false;
   }
 
 }  // namespace myapp
