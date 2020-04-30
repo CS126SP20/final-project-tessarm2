@@ -41,11 +41,19 @@ void MyApp::setup() {
   game_objects.push_back(myLibrary::game_object(blue_tex, ci::vec2(400,400), "It's a blue block!"));
 
   //set up npcs
+  auto bimg = loadImage( loadAsset( "brown_chick.png" ) );
+  auto btex = cinder::gl::Texture2d::create(bimg);
+  myLibrary::NPC brown_chick = myLibrary::NPC("Friendly Guy", "Hi there, could you help me? These demon guys are mean! Go take 5 of em out.", "none", 5, 5, false, btex, ci::vec2(380, 320));
+  brown_chick.setSprite(SetUpSprite("brown_chick_s.png", "brown_chick_s.json"));
+  NPC_list.push_back(brown_chick);
 }
 
 void MyApp::update() {
     if (current_sprite) {
       current_sprite->update();
+      for (auto & NPC : NPC_list) {
+        NPC.getSprite()->update();
+      }
     }
 }
 
@@ -69,7 +77,11 @@ void MyApp::draw() {
     drawPlayer();
     drawObjects();
     if (UI_state == UIState::kTextbox) {
-      drawTextbox(game_objects.at(object_facing_index).getDesc());
+      if (is_NPC) {
+        drawTextbox(NPC_list.at(object_facing_index).getName() + ": " + NPC_list.at(object_facing_index).getDesc());
+      } else {
+        drawTextbox(game_objects.at(object_facing_index).getDesc());
+      }
     }
   }
 }
@@ -215,6 +227,9 @@ void MyApp::drawPlayer() {
     for (auto & game_object : game_objects) {
       game_object.draw();
     }
+    for (auto & NPC : NPC_list) {
+      NPC.draw();
+    }
   }
 
   void MyApp::updateObjects(int x_change, int y_change) {
@@ -222,6 +237,11 @@ void MyApp::drawPlayer() {
       //change the location of each object to scroll with background
       game_object.setLoc(ci::vec2(game_object.getLoc().x +
       x_change, game_object.getLoc().y + y_change));
+    }
+    for (auto & NPC : NPC_list) {
+      //change the location of each NPC to scroll with background
+      NPC.setLoc(ci::vec2(NPC.getLoc().x +
+                                  x_change, NPC.getLoc().y + y_change));
     }
   }
 
@@ -271,7 +291,7 @@ void MyApp::drawPlayer() {
     auto box = cinder::TextBox()
         .alignment(cinder::TextBox::LEFT)
         .font(cinder::Font("Comic Sans MS", 25))
-        .size(ci::ivec2(800, 40))
+        .size(ci::ivec2(800, cinder::TextBox::GROW))
         .color(ci::ColorA(1,1,1,1))
         .backgroundColor(ci::ColorA(0,0,0,1))
         .text(text);
@@ -308,6 +328,18 @@ void MyApp::drawPlayer() {
       auto area = ci::Area(obj_loc, ci::ivec2(obj_loc.x + size.x, obj_loc.y + size.y));
       if (area.contains(updated_loc)) {
         object_facing_index = i;
+        is_NPC = false;
+        return true;
+      }
+    }
+    for(int i = 0; i < NPC_list.size(); i++) {
+      auto size = NPC_list.at(i).getTex()->getSize();
+      auto obj_loc = NPC_list.at(i).getLoc();
+      //add the size to the location because location is top right corner of image.
+      auto area = ci::Area(obj_loc, ci::ivec2(obj_loc.x + size.x, obj_loc.y + size.y));
+      if (area.contains(updated_loc)) {
+        object_facing_index = i;
+        is_NPC = true;
         return true;
       }
     }
@@ -321,6 +353,15 @@ void MyApp::drawPlayer() {
     for(int i = 0; i < game_objects.size(); i++) {
       auto size = game_objects.at(i).getTex()->getSize();
       auto obj_loc = game_objects.at(i).getLoc();
+      //add the size to the location because location is top right corner of image.
+      auto area = ci::Area(obj_loc, ci::ivec2(obj_loc.x + size.x, obj_loc.y + size.y));
+      if (area.contains(updated_loc)) {
+        return true;
+      }
+    }
+    for(int i = 0; i < NPC_list.size(); i++) {
+      auto size = NPC_list.at(i).getTex()->getSize();
+      auto obj_loc = NPC_list.at(i).getLoc();
       //add the size to the location because location is top right corner of image.
       auto area = ci::Area(obj_loc, ci::ivec2(obj_loc.x + size.x, obj_loc.y + size.y));
       if (area.contains(updated_loc)) {

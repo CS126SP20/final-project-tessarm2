@@ -65,6 +65,7 @@ private:
   UIState UI_state = UIState::kInputText;
   myLibrary::Text_input text_input;
   Direction current_direction;
+  bool is_NPC = false;
 
   void drawPlayer();
 
