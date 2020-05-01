@@ -50,6 +50,14 @@ class MyApp : public cinder::app::App {
   void PrintText(const std::string& text, const ci::ColorA& color, const ci::ColorA& bg_color, const cinder::ivec2& size,
                  const cinder::vec2& loc);
 
+
+private:
+  GameState game_state;
+  UIState UI_state = UIState::kInputText;
+  myLibrary::Text_input text_input;
+  Direction current_direction;
+  bool is_NPC = false;
+
   std::string player_name = "Lonk";
   int player_health = 100;
   ci::vec2 player_loc = ci::vec2(400, 320);
@@ -59,18 +67,9 @@ class MyApp : public cinder::app::App {
   std::vector<myLibrary::NPC> NPC_list;
   int object_facing_index = -1;
 
-
-private:
-  GameState game_state;
-  UIState UI_state = UIState::kInputText;
-  myLibrary::Text_input text_input;
-  Direction current_direction;
-  bool is_NPC = false;
-
   void drawPlayer();
 
   po::SpritesheetAnimationRef SetUpSprite(const std::string& tex_file, const std::string& json_file);
-  bool willColide(int x_change, int y_change);
   bool canInteract();
 
   void drawBg();

@@ -22,9 +22,11 @@ using cinder::app::KeyEvent;
   MyApp::MyApp() { }
 
 void MyApp::setup() {
+    //set up background image
   auto img = loadImage( loadAsset( "basic_bg.png" ) );
   mTex = cinder::gl::Texture2d::create( img );
 
+  //set up the player sprites
   chick_right_sprite = SetUpSprite("chicken_right.png", "chicken_right.json");
   chick_left_sprite = SetUpSprite("chicken_left.png", "chicken_left.json");
   chick_forward_sprite = SetUpSprite("chicken_forward.png", "chicken_forward.json");
@@ -46,9 +48,16 @@ void MyApp::setup() {
   myLibrary::NPC brown_chick = myLibrary::NPC("Friendly Guy", "Hi there, could you help me? These demon guys are mean! Go take 5 of em out.", "none", 5, 5, false, btex, ci::vec2(380, 320));
   brown_chick.setSprite(SetUpSprite("brown_chick_s.png", "brown_chick_s.json"));
   NPC_list.push_back(brown_chick);
+
+  auto mDemon = loadImage( loadAsset( "mouth_demon_1.png" ) );
+  auto demTex = cinder::gl::Texture2d::create(mDemon);
+  myLibrary::NPC mouth_demon = myLibrary::NPC("The Chomper", "He's due for a dentist.", "It gnashes it's teeth and attacks!", 5, 5, true, demTex, ci::vec2(500, 400));
+  mouth_demon.setSprite(SetUpSprite("mouth_demon_s.png", "mouth_demon_s.json"));
+  NPC_list.push_back(mouth_demon);
 }
 
 void MyApp::update() {
+    //update all the sprites
     if (current_sprite) {
       current_sprite->update();
       for (auto & NPC : NPC_list) {
@@ -65,7 +74,7 @@ void MyApp::draw() {
   if (game_state == GameState::kOpener){
     cinder::gl::clear();
     //make a new player object?
-    PrintText("hello, " + player_name + "\n welcome to _____",
+    PrintText("hello, " + player_name + "\n welcome to the farm!",
         ci::ColorA(1,1,1,1),
         ci::ColorA(0,0,0,1),
         cinder::ivec2(cinder::TextBox::GROW, cinder::TextBox::GROW),
@@ -76,7 +85,7 @@ void MyApp::draw() {
     drawBg();
     drawPlayer();
     drawObjects();
-    if (UI_state == UIState::kTextbox) {
+    if (UI_state == UIState::kTextbox && object_facing_index != -1) {
       if (is_NPC) {
         drawTextbox(NPC_list.at(object_facing_index).getName() + ": " + NPC_list.at(object_facing_index).getDesc());
       } else {
@@ -145,12 +154,13 @@ void MyApp::keyDown(KeyEvent event) {
       }
     }
     if (event.getCode() == KeyEvent::KEY_RIGHT) {
+      UI_state = UIState::kClose;
       current_direction = Direction::kRight;
       if (current_sprite != chick_right_sprite) {
         current_sprite = chick_right_sprite;
         current_sprite->play();
       }
-      if (!(willColide(kSpeed, 0))) {
+      if (!(canInteract())) {
         if (player_loc.x < 700) {
           player_loc.x += kSpeed;
         } else {
@@ -160,12 +170,13 @@ void MyApp::keyDown(KeyEvent event) {
       }
 
     } else if (event.getCode() == KeyEvent::KEY_LEFT) {
+      UI_state = UIState::kClose;
       current_direction = Direction::kLeft;
       if (current_sprite != chick_left_sprite) {
         current_sprite = chick_left_sprite;
         current_sprite->play();
       }
-      if (!(willColide(-kSpeed, 0))) {
+      if (!(canInteract())) {
         if (player_loc.x > 100) {
           player_loc.x += -kSpeed;
         } else {
@@ -176,12 +187,13 @@ void MyApp::keyDown(KeyEvent event) {
 
 
     } else if (event.getCode() == KeyEvent::KEY_UP) {
+      UI_state = UIState::kClose;
       current_direction = Direction::kUp;
       if (current_sprite != chick_backward_sprite) {
         current_sprite = chick_backward_sprite;
         current_sprite->play();
       }
-      if ((!willColide(0, -kSpeed))) {
+      if ((!canInteract())) {
         if (player_loc.y > 100) {
           player_loc.y += -kSpeed;
         } else {
@@ -191,13 +203,13 @@ void MyApp::keyDown(KeyEvent event) {
       }
 
     } else if (event.getCode() == KeyEvent::KEY_DOWN) {
-
+      UI_state = UIState::kClose;
       current_direction = Direction::kDown;
       if (current_sprite != chick_forward_sprite) {
         current_sprite = chick_forward_sprite;
         current_sprite->play();
       }
-      if (!(willColide(0, kSpeed))) {
+      if (!(canInteract())) {
         if (player_loc.y < 540) {
           player_loc.y += kSpeed;
         } else {
@@ -287,6 +299,7 @@ void MyApp::drawPlayer() {
     cinder::gl::draw(texture, locp);
   }
 
+  //draw a textbox at the bottom of the screen, used when little customizaiton is needed
   void MyApp::drawTextbox(const std::string& text) {
     auto box = cinder::TextBox()
         .alignment(cinder::TextBox::LEFT)
@@ -310,17 +323,22 @@ void MyApp::drawPlayer() {
   }
 
   bool MyApp::canInteract() {
-    //add 16 because the location is the top right corner of the sprite.
     ci::vec2 updated_loc;
-    if (current_direction == Direction::kRight) {
-      updated_loc =  ci::vec2(player_loc.x + 4 + 32, player_loc.y + 16);
-    } else if (current_direction == Direction::kLeft){
-      updated_loc =  ci::vec2(player_loc.x - 4, player_loc.y + 16);
-    } else if (current_direction == Direction::kUp) {
-      updated_loc =  ci::vec2(player_loc.x + 16, player_loc.y - 4);
-    } else {
-      updated_loc =  ci::vec2(player_loc.x + 16, player_loc.y + 32 + 4);
+    switch(current_direction) {
+      case Direction::kRight:
+        updated_loc =  ci::vec2(player_loc.x + 4 + 32, player_loc.y + 16);
+        break;
+      case Direction::kLeft:
+        updated_loc =  ci::vec2(player_loc.x - 4, player_loc.y + 16);
+        break;
+      case Direction::kUp:
+        updated_loc =  ci::vec2(player_loc.x + 16, player_loc.y - 4);
+        break;
+      case Direction::kDown:
+        updated_loc =  ci::vec2(player_loc.x + 16, player_loc.y + 32 + 4);
+        break;
     }
+
     for(int i = 0; i < game_objects.size(); i++) {
       auto size = game_objects.at(i).getTex()->getSize();
       auto obj_loc = game_objects.at(i).getLoc();
@@ -347,28 +365,5 @@ void MyApp::drawPlayer() {
     return false;
   }
 
-  bool MyApp::willColide(int x_change, int y_change) {
-    //add 16 because the location is the top right corner of the sprite.
-    ci::vec2 updated_loc = ci::vec2(player_loc.x + x_change + 16, player_loc.y + y_change + 16);
-    for(int i = 0; i < game_objects.size(); i++) {
-      auto size = game_objects.at(i).getTex()->getSize();
-      auto obj_loc = game_objects.at(i).getLoc();
-      //add the size to the location because location is top right corner of image.
-      auto area = ci::Area(obj_loc, ci::ivec2(obj_loc.x + size.x, obj_loc.y + size.y));
-      if (area.contains(updated_loc)) {
-        return true;
-      }
-    }
-    for(int i = 0; i < NPC_list.size(); i++) {
-      auto size = NPC_list.at(i).getTex()->getSize();
-      auto obj_loc = NPC_list.at(i).getLoc();
-      //add the size to the location because location is top right corner of image.
-      auto area = ci::Area(obj_loc, ci::ivec2(obj_loc.x + size.x, obj_loc.y + size.y));
-      if (area.contains(updated_loc)) {
-        return true;
-      }
-    }
-    return false;
-  }
 
 }  // namespace myapp
