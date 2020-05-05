@@ -7,19 +7,22 @@
 #include <poSpritesheet.h>
 #include <poSpritesheetAnimation.h>
 #include <cinder/Json.h>
+#include <mylibrary/fight.h>
 
 
 namespace myapp {
 
 using cinder::app::KeyEvent;
-
+//for ease of access, player sprites and background image are saved globally
   cinder::gl::Texture2dRef		mTex;
   po::SpritesheetAnimationRef chick_right_sprite;
   po::SpritesheetAnimationRef chick_left_sprite;
   po::SpritesheetAnimationRef chick_forward_sprite;
   po::SpritesheetAnimationRef chick_backward_sprite;
 
-  MyApp::MyApp() { }
+
+//initializes an empty player or else it gets mad
+  MyApp::MyApp() : player("", 0, 0, ci::vec2(0,0), nullptr) { }
 
 void MyApp::setup() {
     //set up background image
@@ -31,8 +34,6 @@ void MyApp::setup() {
   chick_left_sprite = SetUpSprite("chicken_left.png", "chicken_left.json");
   chick_forward_sprite = SetUpSprite("chicken_forward.png", "chicken_forward.json");
   chick_backward_sprite = SetUpSprite("chicken_backward.png", "chicken_backward.json");
-  current_sprite = chick_forward_sprite;
-  current_sprite->play();
 
   //set up objects
   auto yellow_img = loadImage( loadAsset( "yellow_block.png" ) );
@@ -51,15 +52,21 @@ void MyApp::setup() {
 
   auto mDemon = loadImage( loadAsset( "mouth_demon_1.png" ) );
   auto demTex = cinder::gl::Texture2d::create(mDemon);
-  myLibrary::NPC mouth_demon = myLibrary::NPC("The Chomper", "He's due for a dentist.", "It gnashes it's teeth and attacks!", 5, 5, true, demTex, ci::vec2(500, 400));
+  myLibrary::NPC mouth_demon = myLibrary::NPC("The Chomper", "He's due for a dentist.", "It gnashes it's teeth and attacks!", 50, 10, true, demTex, ci::vec2(500, 400));
   mouth_demon.setSprite(SetUpSprite("mouth_demon_s.png", "mouth_demon_s.json"));
   NPC_list.push_back(mouth_demon);
+
+  auto big_demon = loadImage( loadAsset( "chunky_demon_1.png" ) );
+  auto big_dem_tex = cinder::gl::Texture2d::create(big_demon);
+  myLibrary::NPC large_demon = myLibrary::NPC("Big Boi", "He big.", "He swings a boulder-sized fist at you.", 50, 50, true, big_dem_tex, ci::vec2(1000, 400));
+  large_demon.setSprite(SetUpSprite("big_demon_s.png", "big_demon_s.json"));
+  NPC_list.push_back(large_demon);
 }
 
 void MyApp::update() {
     //update all the sprites
-    if (current_sprite) {
-      current_sprite->update();
+    if (player.getSprite()) {
+      player.getSprite()->update();
       for (auto & NPC : NPC_list) {
         NPC.getSprite()->update();
       }
@@ -83,15 +90,39 @@ void MyApp::draw() {
   if (game_state == GameState::kOverworld) {
     cinder::gl::clear();
     drawBg();
-    drawPlayer();
+    player.draw();
     drawObjects();
     if (UI_state == UIState::kTextbox && object_facing_index != -1) {
       if (is_NPC) {
         drawTextbox(NPC_list.at(object_facing_index).getName() + ": " + NPC_list.at(object_facing_index).getDesc());
+        if (NPC_list.at(object_facing_index).getIsEnemy()) {
+          game_state = GameState::kFight;
+          UI_state = UIState::kSelectingOption;
+          player.setSprite(chick_left_sprite);
+          player.getSprite()->play();
+
+          //make a new fight object with the monster
+          current_fight = myLibrary::fight(NPC_list.at(object_facing_index), player);
+        }
       } else {
         drawTextbox(game_objects.at(object_facing_index).getDesc());
       }
     }
+  }
+  if (game_state == GameState::kFight) {
+    float red_change = sin( getElapsedSeconds() ) * 0.1f + 0.1f;
+    float blue_change = cos( getElapsedSeconds() ) * 0.1f + 0.1f;
+    cinder::gl::clear(ci::Color(red_change,0,blue_change));
+    current_fight.drawPlayer();
+    current_fight.drawEnemy();
+    current_fight.drawFlavorText();
+    if (UI_state == UIState::kSelectingOption) {
+      current_fight.drawMenu();
+    }
+  }
+  if (game_state == GameState::kGameOver) {
+    cinder::gl::clear();
+    drawTextbox("Better luck next time, " + player.getName());
   }
 }
 
@@ -137,6 +168,10 @@ void MyApp::keyDown(KeyEvent event) {
   } //end input text state
 
   if (game_state == GameState::kOpener) {
+    //set up player
+    player = myLibrary::player(player_name, 10, 100, ci::vec2(400, 320), chick_forward_sprite);
+    player.getSprite()->play();
+
     if (event.getCode() == KeyEvent::KEY_z) {
       game_state = GameState::kOverworld;
       return;
@@ -156,13 +191,13 @@ void MyApp::keyDown(KeyEvent event) {
     if (event.getCode() == KeyEvent::KEY_RIGHT) {
       UI_state = UIState::kClose;
       current_direction = Direction::kRight;
-      if (current_sprite != chick_right_sprite) {
-        current_sprite = chick_right_sprite;
-        current_sprite->play();
+      if (player.getSprite() != chick_right_sprite) {
+        player.setSprite(chick_right_sprite);
+        player.getSprite()->play();
       }
       if (!(canInteract())) {
-        if (player_loc.x < 700) {
-          player_loc.x += kSpeed;
+        if (player.getLoc().x < 700) {
+          player.setLoc(ci::vec2(player.getLoc().x + kSpeed, player.getLoc().y));
         } else {
           bg_loc.x += -kSpeed;
           updateObjects(-kSpeed,0);
@@ -172,13 +207,13 @@ void MyApp::keyDown(KeyEvent event) {
     } else if (event.getCode() == KeyEvent::KEY_LEFT) {
       UI_state = UIState::kClose;
       current_direction = Direction::kLeft;
-      if (current_sprite != chick_left_sprite) {
-        current_sprite = chick_left_sprite;
-        current_sprite->play();
+      if (player.getSprite() != chick_left_sprite) {
+        player.setSprite(chick_left_sprite);
+        player.getSprite()->play();
       }
       if (!(canInteract())) {
-        if (player_loc.x > 100) {
-          player_loc.x += -kSpeed;
+        if (player.getLoc().x > 100) {
+          player.setLoc(ci::vec2(player.getLoc().x - kSpeed, player.getLoc().y));
         } else {
           bg_loc.x += kSpeed;
           updateObjects(kSpeed,0);
@@ -189,13 +224,13 @@ void MyApp::keyDown(KeyEvent event) {
     } else if (event.getCode() == KeyEvent::KEY_UP) {
       UI_state = UIState::kClose;
       current_direction = Direction::kUp;
-      if (current_sprite != chick_backward_sprite) {
-        current_sprite = chick_backward_sprite;
-        current_sprite->play();
+      if (player.getSprite() != chick_backward_sprite) {
+        player.setSprite(chick_backward_sprite);
+        player.getSprite()->play();
       }
       if ((!canInteract())) {
-        if (player_loc.y > 100) {
-          player_loc.y += -kSpeed;
+        if (player.getLoc().y > 100) {
+          player.setLoc(ci::vec2(player.getLoc().x, player.getLoc().y - kSpeed));
         } else {
           bg_loc.y += kSpeed;
           updateObjects(0, kSpeed);
@@ -205,13 +240,13 @@ void MyApp::keyDown(KeyEvent event) {
     } else if (event.getCode() == KeyEvent::KEY_DOWN) {
       UI_state = UIState::kClose;
       current_direction = Direction::kDown;
-      if (current_sprite != chick_forward_sprite) {
-        current_sprite = chick_forward_sprite;
-        current_sprite->play();
+      if (player.getSprite() != chick_forward_sprite) {
+        player.setSprite(chick_forward_sprite);
+        player.getSprite()->play();
       }
       if (!(canInteract())) {
-        if (player_loc.y < 540) {
-          player_loc.y += kSpeed;
+        if (player.getLoc().y < 540) {
+          player.setLoc(ci::vec2(player.getLoc().x, player.getLoc().y + kSpeed));
         } else {
           bg_loc.y += -kSpeed;
           updateObjects(0, -kSpeed);
@@ -220,14 +255,43 @@ void MyApp::keyDown(KeyEvent event) {
     }
   } //end overworld state
 
+  if (game_state == GameState::kFight) {
+    //do things
+    if (UI_state == UIState::kSelectingOption) {
+      if (event.getCode()== KeyEvent::KEY_DOWN && current_fight.menu_index < 2) {
+        current_fight.menu_index++;
+      }
+      if (event.getCode() == KeyEvent::KEY_UP && current_fight.menu_index > 0) {
+        current_fight.menu_index--;
+      }
+      if (event.getCode() == KeyEvent::KEY_z) {
+        current_fight.selectOption();
+        UI_state = UIState::kClose;
+      }
+      //do fight things then reopen menu
+    }
+    if (event.getCode() == KeyEvent::KEY_z) {
+      current_fight.step();
+      if (current_fight.isTurnsOver()) {
+        UI_state = UIState::kSelectingOption;
+      }
+      if (current_fight.isPlayerDead()) {
+        UI_state = UIState::kClose;
+        game_state = GameState::kGameOver;
+      }
+      if (current_fight.isEnemyDead()) {
+        UI_state = UIState::kClose;
+        game_state = GameState::kOverworld;
+      }
+    }
+    if (current_fight.player_action == myLibrary::PlayerAction::kRun) {
+      game_state = GameState::kOverworld;
+    }
+  }
+
 }
 
-void MyApp::drawPlayer() {
-    ci::gl::pushModelMatrix();
-    ci::gl::translate( player_loc );
-    current_sprite->draw();
-    ci::gl::popModelMatrix();
-  }
+
   void MyApp::drawBg() {
     ci::gl::pushModelMatrix();
     ci::gl::translate( bg_loc );
@@ -240,7 +304,9 @@ void MyApp::drawPlayer() {
       game_object.draw();
     }
     for (auto & NPC : NPC_list) {
-      NPC.draw();
+      if (NPC.getHealth() > 0) {
+        NPC.draw();
+      }
     }
   }
 
@@ -283,7 +349,7 @@ void MyApp::drawPlayer() {
 
   //TAKEN FROM SNAKE GAME
   void MyApp::PrintText(const std::string& text, const ci::ColorA& color, const ci::ColorA& bg_color, const cinder::ivec2& size,
-                 const cinder::vec2& loc) {
+                           const cinder::vec2& loc) {
 
     auto box = cinder::TextBox()
         .alignment(cinder::TextBox::CENTER)
@@ -326,16 +392,16 @@ void MyApp::drawPlayer() {
     ci::vec2 updated_loc;
     switch(current_direction) {
       case Direction::kRight:
-        updated_loc =  ci::vec2(player_loc.x + 4 + 32, player_loc.y + 16);
+        updated_loc =  ci::vec2(player.getLoc().x + 4 + 32, player.getLoc().y + 16);
         break;
       case Direction::kLeft:
-        updated_loc =  ci::vec2(player_loc.x - 4, player_loc.y + 16);
+        updated_loc =  ci::vec2(player.getLoc().x - 4, player.getLoc().y + 16);
         break;
       case Direction::kUp:
-        updated_loc =  ci::vec2(player_loc.x + 16, player_loc.y - 4);
+        updated_loc =  ci::vec2(player.getLoc().x + 16, player.getLoc().y - 4);
         break;
       case Direction::kDown:
-        updated_loc =  ci::vec2(player_loc.x + 16, player_loc.y + 32 + 4);
+        updated_loc =  ci::vec2(player.getLoc().x + 16, player.getLoc().y + 32 + 4);
         break;
     }
 
@@ -355,7 +421,7 @@ void MyApp::drawPlayer() {
       auto obj_loc = NPC_list.at(i).getLoc();
       //add the size to the location because location is top right corner of image.
       auto area = ci::Area(obj_loc, ci::ivec2(obj_loc.x + size.x, obj_loc.y + size.y));
-      if (area.contains(updated_loc)) {
+      if (area.contains(updated_loc) && NPC_list.at(i).getHealth() > 0) {
         object_facing_index = i;
         is_NPC = true;
         return true;

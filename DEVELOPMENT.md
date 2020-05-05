@@ -12,7 +12,7 @@ the player.
 
 4/24/20
 ---
-After this, I got used to using poSpritesheet and managed to get the 
+After the above, I got used to using poSpritesheet and managed to get the 
 chicken animation to play. However, it would only play in the top right corner. I considered
 editing the library, but realized if I changed the matrices of opengl, I could
 draw the player wherever I needed. On top of that, I realized
@@ -20,7 +20,7 @@ I could use the matrices to draw the background so that it scrolls
 when the player reaches the edge.
 - Need to do: Implement objects, NPCs, a border, and the fight mechanic
 
-4/29/20
+4/28/20
 ---
 I worked on implementing game objects and NPCs. Ran into some issues with cinder lib
 being outside of my_app, so I reformatted the game_object to load
@@ -32,3 +32,23 @@ remaining overlap. I also added a function to print a textbox
 of an object's description when a player interacts with it.
 - Need to do: Add NPCs and make it so talking to them triggers a fight
 - The code is starting to get a bit messy, should keep an eye on later clean-up
+
+4/30/20
+---
+Added NPC class and animations. Refactored code a bit and removed repition when checking for object collision vs
+checking for interaction with NPCs. Caused some issues with the game object vectors, 
+but fixed them. Deleted classes and headers I am not using and began outlining
+how the fight system is going to work.
+- Still need to make fight engine and UI
+- Considering adding a seperate Player class
+- the text_input class is messy, lots of things are public that shouldn't be
+- items???????? if I have time
+- the setup() for my_app is cluttered, because each texture needs to be initalized
+for the sprite animations and objects, thinking about how to fix this
+
+5/1/20
+---
+Created a Player class rather than keeping track of player stats in my_app. Made an outline
+for how items could work with enums and stat changes for if I decide to use them. Made it so
+talking to a hostile NPC triggers a fight, but I am still working
+on the UI and turn sequences. Also changed some long if statements to switch cases.

@@ -25,6 +25,7 @@ namespace myLibrary {
       obj_tex = tex;
       location = sLoc;
     }
+    NPC(){ }
     void draw();
     void setHealth(int health);
     void setIsEnemy(bool isEnemey);
