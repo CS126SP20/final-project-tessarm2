@@ -21,6 +21,7 @@ namespace myLibrary {
       current_sprite = sprite;
     }
     player(){ }
+
     std::string getName();
     int getAttack();
     int getHealth();
@@ -30,6 +31,7 @@ namespace myLibrary {
     void setSprite(po::SpritesheetAnimationRef set_sprite);
     void setLoc(ci::vec2 set_loc);
     void draw();
+
   private:
     std::string player_name;
     int player_attack;

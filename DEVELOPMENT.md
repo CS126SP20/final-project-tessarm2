@@ -52,3 +52,25 @@ Created a Player class rather than keeping track of player stats in my_app. Made
 for how items could work with enums and stat changes for if I decide to use them. Made it so
 talking to a hostile NPC triggers a fight, but I am still working
 on the UI and turn sequences. Also changed some long if statements to switch cases.
+- Need to write fight UI and turns
+
+5/4/20
+---
+Decided to delete item use in favor of a simple healing mechanic during battle. Working
+on setting up battle UI and getting a three option menu to open and close
+depending on if it is the player's turn. Made it so background shifts between red, black, and purple
+during the battle.
+- Need to make it so player can deal damage/take damage
+  and set up turn based combat. 
+
+5/5/20
+---
+Finished fight system (took a while, oof). Had an issue that the player and enemy health would reset after
+the battle and the enemy would still be drawn on the map. Changed fight engine to take pointers, because it
+was copying the given Objects, so the health was ultimately not changed. Decided to add an element
+of randomness to damage and healing to spice things up a bit. Fixed bug where player could access fight menu after being killed.
+- Need to finish drawing assets
+- Clean up code and add comments
+
+5/6/20
+---

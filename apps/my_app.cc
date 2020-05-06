@@ -21,8 +21,7 @@ using cinder::app::KeyEvent;
   po::SpritesheetAnimationRef chick_backward_sprite;
 
 
-//initializes an empty player or else it gets mad
-  MyApp::MyApp() : player("", 0, 0, ci::vec2(0,0), nullptr) { }
+  MyApp::MyApp() { }
 
 void MyApp::setup() {
     //set up background image
@@ -38,15 +37,23 @@ void MyApp::setup() {
   //set up objects
   auto yellow_img = loadImage( loadAsset( "yellow_block.png" ) );
   auto yellow_tex = cinder::gl::Texture2d::create( yellow_img );
-  game_objects.push_back(myLibrary::game_object(yellow_tex, ci::vec2(200,200), "It's a yellow block!"));
+  game_objects.push_back(myLibrary::game_object(yellow_tex, ci::vec2(200,200), "A small plot of seeds. Protect this from squirrels with your life."));
   auto blue_img = loadImage( loadAsset( "blue_block.png" ) );
   auto blue_tex = cinder::gl::Texture2d::create( blue_img );
-  game_objects.push_back(myLibrary::game_object(blue_tex, ci::vec2(400,400), "It's a blue block!"));
+  game_objects.push_back(myLibrary::game_object(blue_tex, ci::vec2(400,400), "A beautiful blue block! What's it doin' on a farm like this?"));
+  auto h_fence_img = loadImage( loadAsset( "height_fence.png" ) );
+  auto h_fence_tex = cinder::gl::Texture2d::create( h_fence_img );
+  game_objects.push_back(myLibrary::game_object(h_fence_tex, ci::vec2(0,0), "It's a strong fence."));
+  game_objects.push_back(myLibrary::game_object(h_fence_tex, ci::vec2(1870,0), "It's a strong fence."));
+  auto w_fence_img = loadImage( loadAsset( "width_fence.png" ) );
+  auto w_fence_tex = cinder::gl::Texture2d::create( w_fence_img );
+  game_objects.push_back(myLibrary::game_object(w_fence_tex, ci::vec2(0,0), "It's a strong fence."));
+  game_objects.push_back(myLibrary::game_object(w_fence_tex, ci::vec2(0,1030), "It's a strong fence."));
 
   //set up npcs
   auto bimg = loadImage( loadAsset( "brown_chick.png" ) );
   auto btex = cinder::gl::Texture2d::create(bimg);
-  myLibrary::NPC brown_chick = myLibrary::NPC("Friendly Guy", "Hi there, could you help me? These demon guys are mean! Go take 5 of em out.", "none", 5, 5, false, btex, ci::vec2(380, 320));
+  myLibrary::NPC brown_chick = myLibrary::NPC("Friendly Guy", "Hi there, could you help me? These demon guys are mean! Go take the 3 of em out.", "none", 5, 5, false, btex, ci::vec2(380, 320));
   brown_chick.setSprite(SetUpSprite("brown_chick_s.png", "brown_chick_s.json"));
   NPC_list.push_back(brown_chick);
 
@@ -58,9 +65,15 @@ void MyApp::setup() {
 
   auto big_demon = loadImage( loadAsset( "chunky_demon_1.png" ) );
   auto big_dem_tex = cinder::gl::Texture2d::create(big_demon);
-  myLibrary::NPC large_demon = myLibrary::NPC("Big Boi", "He big.", "He swings a boulder-sized fist at you.", 50, 50, true, big_dem_tex, ci::vec2(1000, 400));
+  myLibrary::NPC large_demon = myLibrary::NPC("Big Boi", "He big.", "He swings a boulder-sized fist at you.", 50, 20, true, big_dem_tex, ci::vec2(1000, 400));
   large_demon.setSprite(SetUpSprite("big_demon_s.png", "big_demon_s.json"));
   NPC_list.push_back(large_demon);
+
+  auto tall_d = loadImage( loadAsset( "tall_2.png" ) );
+  auto tall_tex = cinder::gl::Texture2d::create(tall_d);
+  myLibrary::NPC tall_demon = myLibrary::NPC("Legs for Days", "She tall.", "She extends a leg and smacks ya.", 20, 40, true, tall_tex, ci::vec2(50, 900));
+  tall_demon.setSprite(SetUpSprite("tall_demon_s.png", "tall_demon_s.json"));
+  NPC_list.push_back(tall_demon);
 }
 
 void MyApp::update() {
@@ -102,7 +115,7 @@ void MyApp::draw() {
           player.getSprite()->play();
 
           //make a new fight object with the monster
-          current_fight = myLibrary::fight(NPC_list.at(object_facing_index), player);
+          current_fight = myLibrary::fight(&NPC_list.at(object_facing_index), &player);
         }
       } else {
         drawTextbox(game_objects.at(object_facing_index).getDesc());
@@ -110,8 +123,8 @@ void MyApp::draw() {
     }
   }
   if (game_state == GameState::kFight) {
-    float red_change = sin( getElapsedSeconds() ) * 0.1f + 0.1f;
-    float blue_change = cos( getElapsedSeconds() ) * 0.1f + 0.1f;
+    float red_change = sin( getElapsedSeconds() ) * 0.2f + 0.2f;
+    float blue_change = cos( getElapsedSeconds() ) * 0.2f + 0.2f;
     cinder::gl::clear(ci::Color(red_change,0,blue_change));
     current_fight.drawPlayer();
     current_fight.drawEnemy();
@@ -272,7 +285,7 @@ void MyApp::keyDown(KeyEvent event) {
     }
     if (event.getCode() == KeyEvent::KEY_z) {
       current_fight.step();
-      if (current_fight.isTurnsOver()) {
+      if (current_fight.isTurnsOver() && player.getHealth() > 0) {
         UI_state = UIState::kSelectingOption;
       }
       if (current_fight.isPlayerDead()) {
@@ -290,7 +303,6 @@ void MyApp::keyDown(KeyEvent event) {
   }
 
 }
-
 
   void MyApp::drawBg() {
     ci::gl::pushModelMatrix();

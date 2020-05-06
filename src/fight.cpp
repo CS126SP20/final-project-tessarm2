@@ -8,7 +8,7 @@
 namespace myLibrary {
 
 
-  fight::fight(myLibrary::NPC set_enemy, myLibrary::player set_player) {
+  fight::fight(myLibrary::NPC *set_enemy, myLibrary::player *set_player) {
     enemy = set_enemy;
     player = set_player;
   }
@@ -16,11 +16,14 @@ namespace myLibrary {
   void fight::drawPlayer() {
     ci::gl::pushModelMatrix();
     ci::gl::translate( ci::vec2(600 ,320) );
-    player.getSprite()->draw();
+    player->getSprite()->draw();
     cinder::gl::color(0,1,0);
-    ci::gl::drawSolidRect(ci::Rectf(ci::vec2(0, -20), ci::vec2(player.getHealth(), -15)));
+    if (player->getHealth() < 0) {
+      player->setHealth(0);
+    }
+    ci::gl::drawSolidRect(ci::Rectf(ci::vec2(0, -20), ci::vec2(player->getHealth(), -15)));
     cinder::gl::color(1,1,1);
-    PrintText(player.getName(), ci::ColorA(1,1,1,1),
+    PrintText(player->getName(), ci::ColorA(1,1,1,1),
               ci::ColorA(0,0,0,0), ci::ivec2(ci::TextBox::GROW,ci::TextBox::GROW), ci::vec2(-20, -100));
 
     ci::gl::popModelMatrix();
@@ -29,11 +32,14 @@ namespace myLibrary {
   void fight::drawEnemy() {
     ci::gl::pushModelMatrix();
     ci::gl::translate( ci::vec2(200 ,320) );
-    enemy.getSprite()->draw();
+    enemy->getSprite()->draw();
     cinder::gl::color(0,1,0);
-    ci::gl::drawSolidRect(ci::Rectf(ci::vec2(0, -20), ci::vec2(enemy.getHealth(), -15)));
+    if (enemy->getHealth() < 0) {
+      enemy->setHealth(0);
+    }
+    ci::gl::drawSolidRect(ci::Rectf(ci::vec2(0, -20), ci::vec2(enemy->getHealth(), -15)));
     cinder::gl::color(1,1,1);
-    PrintText(enemy.getName(), ci::ColorA(1,0,0,1),
+    PrintText(enemy->getName(), ci::ColorA(1,0,0,1),
         ci::ColorA(0,0,0,0), ci::ivec2(ci::TextBox::GROW,ci::TextBox::GROW), ci::vec2(-20, -100));
 
     ci::gl::popModelMatrix();
@@ -101,28 +107,28 @@ namespace myLibrary {
       fight_over = true;
       return;
     }
-    if (enemy.getHealth() <= 0) {
-      flavor_text = "You killed " + enemy.getName();
+    if (enemy->getHealth() <= 0) {
+      flavor_text = "You killed " + enemy->getName();
       printed_end = true;
       return;
     }
-    if (player.getHealth() <= 0) {
-      flavor_text = "Damn, " + enemy.getName() + " got you good... RIP";
+    if (player->getHealth() <= 0) {
+      flavor_text = "Damn, " + enemy->getName() + " got you good... RIP";
       printed_end = true;
       return;
     }
-    
+
     if (player_turn) {
       if (player_action == PlayerAction::kRest) {
-        player.setHealth(player.getHealth() + 25);
-        if (player.getHealth() > 100) {
-          player.setHealth(100);
+        player->setHealth(player->getHealth() + 25);
+        if (player->getHealth() > 100) {
+          player->setHealth(100);
         }
         flavor_text = "you regain some health";
         player_turn = false;
         return;
       } else {
-        enemy.setHealth(enemy.getHealth() - player.getAttack());
+        enemy->setHealth(enemy->getHealth() - player->getAttack());
         flavor_text = "you peck at the enemy";
         player_turn = false;
         return;
@@ -131,13 +137,13 @@ namespace myLibrary {
 
     if (enemy_turn) {
       flavor_text = "You suffer damage";
-      player.setHealth(player.getHealth() - enemy.getAttack());
+      player->setHealth(player->getHealth() - enemy->getAttack());
       enemy_turn = false;
       player_turn = true;
       return;
     }
     //its the enemy's turn
-    flavor_text = enemy.getAttackDesc();
+    flavor_text = enemy->getAttackDesc();
     enemy_turn = true;
 
   }
@@ -148,17 +154,11 @@ namespace myLibrary {
   }
 
   bool fight::isPlayerDead() {
-    if (fight_over && player.getHealth() <= 0) {
-      return true;
-    }
-    return false;
+    return fight_over && player->getHealth() <= 0;
   }
 
   bool fight::isEnemyDead() {
-    if (fight_over && enemy.getHealth() <= 0) {
-      return true;
-    }
-    return false;
+    return fight_over && enemy->getHealth() <= 0;
   }
 
 
