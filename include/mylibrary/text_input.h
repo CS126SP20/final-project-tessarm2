@@ -9,6 +9,7 @@ namespace myLibrary {
 
   class Text_input {
   public:
+    //a public alphabet array for ease of access and tidiness in my_app
     std::string text_options[4][7] {
       "a","b","c","d","e","f","g",
           "h","i","j","k","l","m","n",

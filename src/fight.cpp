@@ -14,15 +14,18 @@ namespace myLibrary {
   }
 
   void fight::drawPlayer() {
+    //draws the sprite on the right side of the screen
     ci::gl::pushModelMatrix();
     ci::gl::translate( ci::vec2(600 ,320) );
     player->getSprite()->draw();
+    //draws the healthbar
     cinder::gl::color(0,1,0);
     if (player->getHealth() < 0) {
       player->setHealth(0);
     }
     ci::gl::drawSolidRect(ci::Rectf(ci::vec2(0, -20), ci::vec2(player->getHealth(), -15)));
     cinder::gl::color(1,1,1);
+    //draws the player name
     PrintText(player->getName(), ci::ColorA(1,1,1,1),
               ci::ColorA(0,0,0,0), ci::ivec2(ci::TextBox::GROW,ci::TextBox::GROW), ci::vec2(-20, -100));
 
@@ -30,15 +33,18 @@ namespace myLibrary {
   }
 
   void fight::drawEnemy() {
+    //draws the sprite on the left side of the screen
     ci::gl::pushModelMatrix();
     ci::gl::translate( ci::vec2(200 ,320) );
     enemy->getSprite()->draw();
+    //draws the health bar
     cinder::gl::color(0,1,0);
     if (enemy->getHealth() < 0) {
       enemy->setHealth(0);
     }
     ci::gl::drawSolidRect(ci::Rectf(ci::vec2(0, -20), ci::vec2(enemy->getHealth(), -15)));
     cinder::gl::color(1,1,1);
+    //draws the enemy name
     PrintText(enemy->getName(), ci::ColorA(1,0,0,1),
         ci::ColorA(0,0,0,0), ci::ivec2(ci::TextBox::GROW,ci::TextBox::GROW), ci::vec2(-20, -100));
 
@@ -46,6 +52,7 @@ namespace myLibrary {
   }
 
   void fight::drawMenu() {
+    //prints the 3 menu options
     for (int i = 0; i < 3; i++) {
       if (menu_index == i) {
         //the current index matches the index the player is on, so the text is yellow
@@ -84,7 +91,7 @@ namespace myLibrary {
   }
 
   void fight::selectOption() {
-    //player action
+    //sets up player action for back and forth in battle
     switch(menu_index) {
       case 0:
         flavor_text = "you attack!";
@@ -102,47 +109,56 @@ namespace myLibrary {
   }
 
   void fight::step() {
-    //player does their thing
     if (printed_end) {
+      //the fight is exited after the end-text is printed
       fight_over = true;
       return;
     }
     if (enemy->getHealth() <= 0) {
-      flavor_text = "You killed " + enemy->getName();
+      flavor_text = "you killed " + enemy->getName();
+      //prints end so fight is exited on next 'step'
       printed_end = true;
       return;
     }
     if (player->getHealth() <= 0) {
       flavor_text = "Damn, " + enemy->getName() + " got you good... RIP";
+      //prints end so fight is exited on next 'step'
       printed_end = true;
       return;
     }
 
-    if (player_turn) {
+    if (player_turn && player_action != PlayerAction::kRun) {
+      //generates random num 1-15
+      int rand_num = rand() % 15 + 1;
+      int damage = rand_num + player->getAttack();
       if (player_action == PlayerAction::kRest) {
-        player->setHealth(player->getHealth() + 25);
+        player->setHealth(player->getHealth() + rand_num + 15);
+        //player cant exceed max health when healing
         if (player->getHealth() > 100) {
           player->setHealth(100);
         }
-        flavor_text = "you regain some health";
+        flavor_text = "you regain " + std::to_string(rand_num + 15)+" health";
         player_turn = false;
         return;
       } else {
-        enemy->setHealth(enemy->getHealth() - player->getAttack());
-        flavor_text = "you peck at the enemy";
+        enemy->setHealth(enemy->getHealth() - damage);
+        flavor_text = "you peck at the enemy for " + std::to_string(damage) + " damage";
         player_turn = false;
         return;
       }
     }
 
     if (enemy_turn) {
-      flavor_text = "You suffer damage";
-      player->setHealth(player->getHealth() - enemy->getAttack());
+      //generates random num 1-15
+      int rand_num = rand() % 15 + 1;
+      int damage = rand_num + enemy->getAttack();
+      flavor_text = "ouch, you suffer " + std::to_string(damage) +  " damage";
+      player->setHealth(player->getHealth() - damage);
       enemy_turn = false;
       player_turn = true;
       return;
     }
-    //its the enemy's turn
+    //its the enemy's turn, sets the flavor text and then the enemy attacks on the next 'step'
     flavor_text = enemy->getAttackDesc();
     enemy_turn = true;
 
@@ -154,10 +170,12 @@ namespace myLibrary {
   }
 
   bool fight::isPlayerDead() {
+    //used to make sure the death text is written out before changing screen
     return fight_over && player->getHealth() <= 0;
   }
 
   bool fight::isEnemyDead() {
+    //used to make sure the death text is written out before changing screen
     return fight_over && enemy->getHealth() <= 0;
   }
 

@@ -18,7 +18,9 @@ const int kHeight = 640;
 
 void SetUp(App::Settings* settings) {
   settings->setWindowSize(kWidth, kHeight);
-  settings->setTitle("My CS 126 Application");
+  settings->setTitle("Brave Chicken");
+  settings->setResizable(false);
+  settings->setFullScreen(false);
 }
 
 }  // namespace myapp

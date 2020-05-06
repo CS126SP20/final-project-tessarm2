@@ -74,3 +74,8 @@ of randomness to damage and healing to spice things up a bit. Fixed bug where pl
 
 5/6/20
 ---
+Added a border so player could not go off-screen and deleted classes I am not using.
+Also added last enemy and balanced their stats so that it is possible to beat all three
+without dying. Fixed bug where player would deal damage when running from a battle. Set
+run settings so screen size can't be changed, as this messes with formatting. Added comments to all headers.
+- Turn it in and work on other finals!!

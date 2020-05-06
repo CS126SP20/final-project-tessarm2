@@ -38,13 +38,16 @@ void MyApp::setup() {
   auto yellow_img = loadImage( loadAsset( "yellow_block.png" ) );
   auto yellow_tex = cinder::gl::Texture2d::create( yellow_img );
   game_objects.push_back(myLibrary::game_object(yellow_tex, ci::vec2(200,200), "A small plot of seeds. Protect this from squirrels with your life."));
+
   auto blue_img = loadImage( loadAsset( "blue_block.png" ) );
   auto blue_tex = cinder::gl::Texture2d::create( blue_img );
   game_objects.push_back(myLibrary::game_object(blue_tex, ci::vec2(400,400), "A beautiful blue block! What's it doin' on a farm like this?"));
+
   auto h_fence_img = loadImage( loadAsset( "height_fence.png" ) );
   auto h_fence_tex = cinder::gl::Texture2d::create( h_fence_img );
   game_objects.push_back(myLibrary::game_object(h_fence_tex, ci::vec2(0,0), "It's a strong fence."));
   game_objects.push_back(myLibrary::game_object(h_fence_tex, ci::vec2(1870,0), "It's a strong fence."));
+
   auto w_fence_img = loadImage( loadAsset( "width_fence.png" ) );
   auto w_fence_tex = cinder::gl::Texture2d::create( w_fence_img );
   game_objects.push_back(myLibrary::game_object(w_fence_tex, ci::vec2(0,0), "It's a strong fence."));
@@ -71,7 +74,7 @@ void MyApp::setup() {
 
   auto tall_d = loadImage( loadAsset( "tall_2.png" ) );
   auto tall_tex = cinder::gl::Texture2d::create(tall_d);
-  myLibrary::NPC tall_demon = myLibrary::NPC("Legs for Days", "She tall.", "She extends a leg and smacks ya.", 20, 40, true, tall_tex, ci::vec2(50, 900));
+  myLibrary::NPC tall_demon = myLibrary::NPC("Legs for Days", "She tall.", "She extends a leg and smacks ya.", 30, 40, true, tall_tex, ci::vec2(50, 900));
   tall_demon.setSprite(SetUpSprite("tall_demon_s.png", "tall_demon_s.json"));
   NPC_list.push_back(tall_demon);
 }
@@ -90,7 +93,8 @@ void MyApp::draw() {
   if (UI_state == UIState::kInputText) {
     cinder::gl::clear();
     drawTextInput();
-  }
+  } //end text-input
+
   if (game_state == GameState::kOpener){
     cinder::gl::clear();
     //make a new player object?
@@ -99,16 +103,20 @@ void MyApp::draw() {
         ci::ColorA(0,0,0,1),
         cinder::ivec2(cinder::TextBox::GROW, cinder::TextBox::GROW),
         cinder::vec2(getWindowCenter()));
-  }
+  } //end opener
+
   if (game_state == GameState::kOverworld) {
     cinder::gl::clear();
     drawBg();
     player.draw();
     drawObjects();
+    //an object has been encountered and the UI state has been switched to textbox
     if (UI_state == UIState::kTextbox && object_facing_index != -1) {
       if (is_NPC) {
-        drawTextbox(NPC_list.at(object_facing_index).getName() + ": " + NPC_list.at(object_facing_index).getDesc());
+        drawTextbox(NPC_list.at(object_facing_index).getName() + ": " +
+        NPC_list.at(object_facing_index).getDesc());
         if (NPC_list.at(object_facing_index).getIsEnemy()) {
+          //the NPC is hostile, so start a new fight
           game_state = GameState::kFight;
           UI_state = UIState::kSelectingOption;
           player.setSprite(chick_left_sprite);
@@ -121,11 +129,14 @@ void MyApp::draw() {
         drawTextbox(game_objects.at(object_facing_index).getDesc());
       }
     }
-  }
+  } //end overworld
+
   if (game_state == GameState::kFight) {
+    //changes color of the background between red and purple during fight
     float red_change = sin( getElapsedSeconds() ) * 0.2f + 0.2f;
     float blue_change = cos( getElapsedSeconds() ) * 0.2f + 0.2f;
     cinder::gl::clear(ci::Color(red_change,0,blue_change));
+
     current_fight.drawPlayer();
     current_fight.drawEnemy();
     current_fight.drawFlavorText();
@@ -136,12 +147,13 @@ void MyApp::draw() {
   if (game_state == GameState::kGameOver) {
     cinder::gl::clear();
     drawTextbox("Better luck next time, " + player.getName());
-  }
+  } //end fight
 }
 
 void MyApp::keyDown(KeyEvent event) {
 
   if (UI_state == UIState::kInputText) {
+    //navigate through 2D array of alphabet with keyboard, press z to select
     if (event.getCode() == KeyEvent::KEY_RIGHT) {
       if (text_input.current_col < 6) {
         text_input.current_col++;
@@ -163,17 +175,20 @@ void MyApp::keyDown(KeyEvent event) {
       }
     }
     if (event.getCode() == KeyEvent::KEY_z) {
+      //user is done inputing, change world state
       if (text_input.text_options[text_input.current_row][text_input.current_col] == "OK") {
         cinder::gl::clear();
         UI_state = UIState::kClose;
         game_state = GameState::kOpener;
         return;
+        //user is deleting text
       } else if (text_input.text_options[text_input.current_row][text_input.current_col] == "DEL") {
         if (!player_name.empty()) {
           player_name.pop_back();
         }
       } else {
-        if (player_name.size() < 9) {
+        //max 10 char limit
+        if (player_name.size() <= 9) {
           player_name += text_input.text_options[text_input.current_row][text_input.current_col];
         }
       }
@@ -181,7 +196,7 @@ void MyApp::keyDown(KeyEvent event) {
   } //end input text state
 
   if (game_state == GameState::kOpener) {
-    //set up player
+    //set up player during opening
     player = myLibrary::player(player_name, 10, 100, ci::vec2(400, 320), chick_forward_sprite);
     player.getSprite()->play();
 
@@ -194,6 +209,7 @@ void MyApp::keyDown(KeyEvent event) {
   if (game_state == GameState::kOverworld) {
     if (event.getCode() == KeyEvent::KEY_z) {
       if (UI_state == UIState::kTextbox) {
+        //close the open textbox
         UI_state = UIState::kClose;
       }
       if (canInteract()) {
@@ -201,6 +217,7 @@ void MyApp::keyDown(KeyEvent event) {
         UI_state = UIState::kTextbox;
       }
     }
+    //manipulate the player sprite based on what key was pressed
     if (event.getCode() == KeyEvent::KEY_RIGHT) {
       UI_state = UIState::kClose;
       current_direction = Direction::kRight;
@@ -269,8 +286,8 @@ void MyApp::keyDown(KeyEvent event) {
   } //end overworld state
 
   if (game_state == GameState::kFight) {
-    //do things
     if (UI_state == UIState::kSelectingOption) {
+      //navigate fight menu with arrow-keys
       if (event.getCode()== KeyEvent::KEY_DOWN && current_fight.menu_index < 2) {
         current_fight.menu_index++;
       }
@@ -284,6 +301,7 @@ void MyApp::keyDown(KeyEvent event) {
       //do fight things then reopen menu
     }
     if (event.getCode() == KeyEvent::KEY_z) {
+      //displays text of each turn and continues when the user presses z
       current_fight.step();
       if (current_fight.isTurnsOver() && player.getHealth() > 0) {
         UI_state = UIState::kSelectingOption;
@@ -300,9 +318,9 @@ void MyApp::keyDown(KeyEvent event) {
     if (current_fight.player_action == myLibrary::PlayerAction::kRun) {
       game_state = GameState::kOverworld;
     }
-  }
+  } //end fight state
 
-}
+} //end keyboard input
 
   void MyApp::drawBg() {
     ci::gl::pushModelMatrix();
@@ -323,6 +341,7 @@ void MyApp::keyDown(KeyEvent event) {
   }
 
   void MyApp::updateObjects(int x_change, int y_change) {
+    //scrolls all objects and NPCs
     for (auto & game_object : game_objects) {
       //change the location of each object to scroll with background
       game_object.setLoc(ci::vec2(game_object.getLoc().x +
@@ -377,7 +396,7 @@ void MyApp::keyDown(KeyEvent event) {
     cinder::gl::draw(texture, locp);
   }
 
-  //draw a textbox at the bottom of the screen, used when little customizaiton is needed
+  //draw a textbox at the bottom of the screen, used when no customizaiton is needed
   void MyApp::drawTextbox(const std::string& text) {
     auto box = cinder::TextBox()
         .alignment(cinder::TextBox::LEFT)
@@ -390,6 +409,7 @@ void MyApp::keyDown(KeyEvent event) {
     cinder::gl::draw(texture, ci::ivec2(0,540));
   }
 
+  //returns a set up sprite
   po::SpritesheetAnimationRef MyApp::SetUpSprite(const std::string& tex_file, const std::string& json_file) {
     auto chicken_tex = cinder::gl::Texture::create(loadImage(loadAsset(tex_file)));
     auto json = cinder::JsonTree(loadAsset(json_file));
@@ -402,18 +422,21 @@ void MyApp::keyDown(KeyEvent event) {
 
   bool MyApp::canInteract() {
     ci::vec2 updated_loc;
+    //creates a potential new location for the player based on the direction
+    //and makes sure that point is not inside another sprite
     switch(current_direction) {
       case Direction::kRight:
-        updated_loc =  ci::vec2(player.getLoc().x + 4 + 32, player.getLoc().y + 16);
+        //32x32 is the size of the chicken sprite
+        updated_loc =  ci::vec2(player.getLoc().x + kSpeed + 32, player.getLoc().y + 16);
         break;
       case Direction::kLeft:
-        updated_loc =  ci::vec2(player.getLoc().x - 4, player.getLoc().y + 16);
+        updated_loc =  ci::vec2(player.getLoc().x - kSpeed, player.getLoc().y + 16);
         break;
       case Direction::kUp:
-        updated_loc =  ci::vec2(player.getLoc().x + 16, player.getLoc().y - 4);
+        updated_loc =  ci::vec2(player.getLoc().x + 16, player.getLoc().y - kSpeed);
         break;
       case Direction::kDown:
-        updated_loc =  ci::vec2(player.getLoc().x + 16, player.getLoc().y + 32 + 4);
+        updated_loc =  ci::vec2(player.getLoc().x + 16, player.getLoc().y + 32 + kSpeed);
         break;
     }
 

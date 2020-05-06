@@ -13,6 +13,7 @@
 namespace myLibrary {
   class player {
   public:
+    //constructors
     player(std::string name, int attack, int health, ci::vec2 loc, po::SpritesheetAnimationRef sprite) {
       player_name = name;
       player_attack = attack;
@@ -22,11 +23,14 @@ namespace myLibrary {
     }
     player(){ }
 
+    //getters
     std::string getName();
     int getAttack();
     int getHealth();
     po::SpritesheetAnimationRef getSprite();
     ci::vec2 getLoc();
+
+    //setters
     void setHealth(int set_health);
     void setSprite(po::SpritesheetAnimationRef set_sprite);
     void setLoc(ci::vec2 set_loc);

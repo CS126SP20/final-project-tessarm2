@@ -14,6 +14,7 @@
 namespace myLibrary {
   class NPC {
   public:
+    //constructors
     NPC(std::string sName, std::string sDesc, std::string atDesc, int sHealth,
         int sAttack, bool enemy, cinder::gl::Texture2dRef tex, ci::vec2 sLoc) {
       name = sName;
@@ -26,12 +27,18 @@ namespace myLibrary {
       location = sLoc;
     }
     NPC(){ }
+
+    //draws and plays NPC sprite on screen
     void draw();
+
+    //setters
     void setHealth(int health);
     void setIsEnemy(bool isEnemey);
     void setDesc(std::string desc);
     void setLoc(ci::vec2 setLoc);
     void setSprite(po::SpritesheetAnimationRef set_sprite);
+
+    //getters
     po::SpritesheetAnimationRef getSprite();
     int getHealth();
     int getIsEnemy();

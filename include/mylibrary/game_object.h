@@ -26,13 +26,18 @@ namespace myLibrary {
     cinder::gl::Texture2dRef getTex();
 
     //setter
+    //the description and texture should not be changed after creation
     void setLoc(ci::vec2 new_loc);
 
+    //draws the game object on the screen
     void draw();
 
   private:
+    //description of object for interaction
     std::string obj_desc;
+    //location of object
     ci::vec2 obj_location;
+    //texture of object
     cinder::gl::Texture2dRef obj_tex;
 
   };
