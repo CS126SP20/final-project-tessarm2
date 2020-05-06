@@ -9,7 +9,7 @@ how to use fight.cc and NPC.cc
 
 ![demo image](https://pbs.twimg.com/media/EXXTR5YVcAAqBkk?format=png&name=900x900)
 
-Dependencies
+Dependencies and Getting Started
 ---
 - [CMake](https://cmake.org/)
   - [how to set up cmake and cinder blocks](https://courses.grainger.illinois.edu/cs126/sp2020/notes/cmake/)
@@ -18,7 +18,6 @@ Dependencies
 - [Cinder-poSpritesheet](https://github.com/Potion/Cinder-poSpritesheet)
   - follow cinder block tutorial in link above
  
-
-After setting up the libraries and CMake files, open the project in CLion and set your target to cinder-myapp and click the green
+After setting up the libraries and CMake files, open the project, set your target to cinder-myapp, and click the green
 play button. If the executable is not showing up, try reloading the CMakeLists.txt
-under apps. 
+under apps. After that, you should input your name with the arrow keys and explore the world presented to you!
